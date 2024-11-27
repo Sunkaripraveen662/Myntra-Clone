@@ -30,7 +30,7 @@ const Header=()=>{
                 <span className="action_name">Wishlist</span>
             </div>
 
-            <Link className="action_container" href="/bag">
+            <Link className="action_container" to="/bag">
                 <FaBagShopping/>
                 <span className="action_name">Bag</span>
                 <span className="bag-item-count">0</span>

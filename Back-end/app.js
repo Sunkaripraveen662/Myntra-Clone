@@ -1,10 +1,12 @@
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const { getStoredItems, storeItems } = require('./data/item'); // Correct path to item.js
 
-const app = express(); // Renamed variable from appendFile to app for clarity
+const app = express();
 
 // Middleware
+app.use(cors());  // Allow all origins by default
 app.use(bodyParser.json());
 
 // POST endpoint to add a new item
@@ -23,7 +25,7 @@ app.post('/items', async (req, res) => {
         await storeItems(updatedItems);
 
         // Respond with success message
-        res.status(201).json({ message: 'stored new item:', item: newItem });
+        res.status(201).json({ message: 'Stored new item:', item: newItem });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Internal Server Error' });
