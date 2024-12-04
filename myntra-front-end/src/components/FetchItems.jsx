@@ -1,45 +1,33 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { itemActions } from "../store/ItemSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { itemsActions } from "../store/itemsSlice";
 import { fetchStatusActions } from "../store/fetchStatusSlice";
 
 const FetchItems = () => {
-  const fetchStatus = useSelector((state) => state.fetchStatus);
+  const fetchStatus = useSelector((store) => store.fetchStatus);
   const dispatch = useDispatch();
-  
-    
+
   useEffect(() => {
     if (fetchStatus.fetchDone) return;
 
     const controller = new AbortController();
     const signal = controller.signal;
-    
 
-    const fetchData = async () => {
-      try {
-        const res = await fetch("http://localhost:8080/items", { signal });
-        const data = await res.json();
-    
-        dispatch(itemActions.addInitialItems(data.items));
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          console.log("Fetch aborted");
-        } else {
-          console.error("Error fetching items:", error);
-        }
-      }
-    };
-
-    fetchData();
+    dispatch(fetchStatusActions.markFetchingStarted());
+    fetch("http://localhost:8080/items", { signal })
+      .then((res) => res.json())
+      .then(({ items }) => {
+        dispatch(fetchStatusActions.markFetchDone());
+        dispatch(fetchStatusActions.markFetchingFinished());
+        dispatch(itemsActions.addInitialItems(items[0]));
+      });
 
     return () => {
-      controller.abort();  // Cleanup: abort the fetch if the component unmounts
+      controller.abort();
     };
-  }, [fetchStatus, dispatch]);
+  }, [fetchStatus]);
 
-  return (
-    <></>
-  );
+  return <></>;
 };
 
 export default FetchItems;

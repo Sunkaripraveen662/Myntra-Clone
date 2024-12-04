@@ -1,49 +1,41 @@
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
-const { getStoredItems, storeItems } = require('./data/item'); // Correct path to item.js
+
+const { getStoredItems, storeItems } = require('./data/items');
 
 const app = express();
 
-// Middleware
-app.use(cors());  // Allow all origins by default
 app.use(bodyParser.json());
 
-// POST endpoint to add a new item
-app.post('/items', async (req, res) => {
-    try {
-        const { newItem } = req.body;
-        if (!newItem) {
-            return res.status(400).json({ message: 'Invalid input: newItem is required' });
-        }
-
-        // Get existing items and add the new item
-        const items = await getStoredItems();
-        const updatedItems = [...items, newItem];
-
-        // Save updated items to the JSON file
-        await storeItems(updatedItems);
-
-        // Respond with success message
-        res.status(201).json({ message: 'Stored new item:', item: newItem });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
 });
 
-// GET endpoint to fetch all stored items
 app.get('/items', async (req, res) => {
-    try {
-        const items = await getStoredItems();
-        res.status(200).json({ items });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Failed to fetch items' });
-    }
+  const storedItems = await getStoredItems();
+  await new Promise((resolve, reject) => setTimeout(() => resolve(), 2000));
+  res.json({ items: storedItems });
 });
 
-// Server setup
-app.listen(8080, () => {
-    console.log('Server is running on http://localhost:8080');
+app.get('/items/:id', async (req, res) => {
+  const storedItems = await getStoredItems();
+  const item = storedItems.find((item) => item.id === req.params.id);
+  res.json({ item });
 });
+
+app.post('/items', async (req, res) => {
+  const existingItems = await getStoredItems();
+  const itemData = req.body;
+  const newItem = {
+    ...itemData,
+    id: Math.random().toString(),
+  };
+  const updatedItems = [newItem, ...existingItems];
+  await storeItems(updatedItems);
+  res.status(201).json({ message: 'Stored new item.', item: newItem });
+});
+
+app.listen(8080);
